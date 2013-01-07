@@ -113,6 +113,8 @@ class FooCommand(sublime_plugin.TextCommand):
                 if iter(pages) is pages:
                     pages = list(pages)
             except Exception, e:
+                import traceback
+                print traceback.format_exc()
                 error = str(e)
 
             # Go back to main thread with result

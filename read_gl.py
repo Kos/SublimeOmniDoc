@@ -25,9 +25,9 @@ def index():
 				action=gendoc.Navigate(NAMESPACE+':'+name)
 			)
 
-def header(title, hint, completion, doc_url):
+def header(title, hint, completion, doc_url): # TODO refactor out
 	yield Page(
-		label=title, # TODO centering
+		label=title, # TODO centering???
 		desc=hint,
 		action=gendoc.Insert(completion))
 	yield Page(
