@@ -49,10 +49,10 @@ class Insert(object):
 import collections
 Entry = collections.namedtuple('Entry','label desc action')
 
-def wrap(s):
-    maxlines = 3
+def wrap(s, maxlines=3, shorten=0):
+    maxlines = maxlines - shorten
     import textwrap
-    wrapped = textwrap.wrap(s, 60)
+    wrapped = textwrap.wrap(s, 70)
     if len(wrapped) > maxlines:
         wrapped = wrapped[:maxlines]
         wrapped[-1] = wrapped[-1][:55] + '...'

@@ -35,19 +35,22 @@ def get_page(name):
 	soup = bs4.BeautifulSoup(urllib2.urlopen(doc_url).read())
 	title, _, desc = soup.find(class_='refnamediv').p.get_text().partition(u'—')
 	title, desc = map(unicode.strip, (title, desc))
-	completion = soup.find(summary='Function synopsis').get_text()
+	completion = soup.find('div', class_='funcsynopsis').get_text()
 
 	for k in header(title, desc, completion, doc_url):
 		yield k
 
 	yield gendoc.Entry(
-		label='Parameters:',
+		label=gendoc.whitespace.pad+'Parameters:',
 		desc=None,
 		action=None)
 
 	for dt in soup.find(class_='variablelist').dl.find_all('dt', recursive=False):
 		dd = dt.find_next_sibling('dd')
 		name, desc = dt.get_text().strip(), dd.get_text().strip()
+		# OGL is a bit crazy with spaces, so
+		name = ' '.join(name.split())
+		desc = ' '.join(desc.split())
 		yield gendoc.Entry(name, desc, gendoc.Insert(name))
 
 

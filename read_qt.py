@@ -37,12 +37,14 @@ def find_desc_para(elem):
 				return None
 		elem = elem.next_sibling
 
-def h3_to_page(h3):
+def h3_to_page(h3, parentname):
 	name = h3.find('span', class_='name').get_text().strip()
-	sig = h3.get_text().strip() # TODO get the class name out of here, it's clutter
-	desc = find_desc_para(h3).get_text().strip()
+	sig = h3.get_text().strip()
+	# get the class name out of here, it's clutter
+	sig = sig.replace(parentname+'::', '')
+	description = find_desc_para(h3).get_text().strip()
 	completion = sig # TODO a better completion
-	return gendoc.Entry(label=name, desc=[sig, desc], action=gendoc.Insert(completion))
+	return gendoc.Entry(label=name, desc=[sig]+gendoc.wrap(description, shorten=1), action=gendoc.Insert(completion))
 
 def get_page(name):
 	soup = bs4.BeautifulSoup(urllib2.urlopen(page_url_format.format(name)))
@@ -54,7 +56,7 @@ def get_page(name):
 			doc_url = page_url_format.format(name)):
 		yield k
 	for h3 in soup.find('div', class_='func').find_all('h3', class_='fn'):
-		yield h3_to_page(h3)
+		yield h3_to_page(h3, title)
 
 	#for li in soup.find('table',class_='propsummary').find_all('li',class_='fn'):
 
