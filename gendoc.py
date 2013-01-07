@@ -3,19 +3,21 @@ import webbrowser, threading
 from registered import modules_by_name, modules_by_prefix
 
 # TODOS:
-# - some renames (page, this module itself...)
-# - caching :o
-# - read some input from buffer
-# - cleanup register_module / Module
+# - page caching :o
+# - read some input from buffer and use it as a query
 
-def register_module(mod): # Naaaaaaaaah,
+def create_module(**kwargs):
+    register_module(Module(**kwargs))
+
+def register_module(mod):
     modules_by_prefix[mod.prefix] = mod
     modules_by_name[mod.name] = mod
 
 class Module(object):
+    required_stuff = ['name', 'prefix', 'get_index', 'get_page']
 
     def __init__(self, **kwargs):
-        for field in 'name prefix index page'.split():
+        for field in self.required_stuff:
             setattr(self, field, kwargs[field])
 
 class Navigate(object):
@@ -45,8 +47,7 @@ class Insert(object):
                 
 
 import collections
-Page = collections.namedtuple('Page','label desc action') # TODO rename me, should be like 'entry'
-
+Entry = collections.namedtuple('Entry','label desc action')
 
 def wrap(s):
     maxlines = 3
@@ -57,33 +58,21 @@ def wrap(s):
         wrapped[-1] = wrapped[-1][:55] + '...'
     return wrapped
 
-def page2item(page):
-    if page.desc is None:
-        return page.label
-    if isinstance(page.desc, (list, tuple)):
+def entry2item(entry):
+    if entry.desc is None:
+        return entry.label
+    if isinstance(entry.desc, (list, tuple)):
         # we're iterable, don't wrap
-        return [page.label] + list(page.desc)
+        return [entry.label] + list(entry.desc)
     else:
         # consider desc a string, wrap if needed
-        return [page.label] + wrap(page.desc)
+        return [entry.label] + wrap(entry.desc)
 
-
-
-def stuff___(wnd, view, edit):
-
+class whitespace:
     pad = ' '*8
     pad2 = ' ' * 10
     center = pad*2
     center2 = pad2*2
-
-    center, center2
-
-    [
-        [pad+'Sublime','package'],
-        ['(show doc?)','http://www.sublimetext.com/docs/2/api_reference.html'],
-        [pad+'Members:'],
-    ]
-
 
 class FooCommand(sublime_plugin.TextCommand):
 
@@ -92,7 +81,7 @@ class FooCommand(sublime_plugin.TextCommand):
         self.wnd = self.view.window()
         self.edit = edit
 
-        # For now, start with calling the command list
+        # For now, start with calling the module list
         # TODO: read some context and decide
         self.show_modules()
 
@@ -105,13 +94,13 @@ class FooCommand(sublime_plugin.TextCommand):
             error = None
             try:
                 if not page:
-                    pages = module.index()
+                    entries = module.get_index()
                 else:
-                    pages = module.page(page)
+                    entries = module.get_page(page)
 
                 # Unwind any generators.
-                if iter(pages) is pages:
-                    pages = list(pages)
+                if iter(entries) is entries:
+                    entries = list(entries)
             except Exception, e:
                 import traceback
                 print traceback.format_exc()
@@ -122,7 +111,7 @@ class FooCommand(sublime_plugin.TextCommand):
                 if error:
                     self.show_error_message(error)
                 else:
-                    self.show_pages(pages)
+                    self.show_entries(entries)
             sublime.set_timeout(done, 0)
         
         t = threading.Thread(target=threadfunc, name='fetch doc thread')
@@ -132,14 +121,14 @@ class FooCommand(sublime_plugin.TextCommand):
         module = modules_by_prefix[moduleprefix]
         self.navigate(module, page)
 
-    def show_pages(self, pages):
-        '''show_pages( [Page] ) - opens a quick panel with specified pages'''
-        pages = list(pages)
-        items = map(page2item, pages)
+    def show_entries(self, entries):
+        '''show_entries( [Entry] ) - opens a quick panel with specified entries'''
+        entries = list(entries)
+        items = map(entry2item, entries)
 
         def on_done(n):
             if n<0: return
-            action = pages[n].action
+            action = entries[n].action
             if action:
                 action(self)
             
@@ -148,15 +137,15 @@ class FooCommand(sublime_plugin.TextCommand):
 
     def show_modules(self):
         '''Lists available modules'''
-        pages = []
+        entries = []
         for name, mod in sorted(modules_by_name.iteritems(), key=lambda (name, mod): name):
-            item = Page(label=mod.name,
+            entry = Entry(label=mod.name,
                 desc='TODO description',
                 action=Navigate(mod.prefix))
-            pages.append(item)
-        if len(pages) == 0:
-            pages.append(Page(label="No modules found :(", desc=None, action=None))
-        self.show_pages(pages)
+            entries.append(entry)
+        if len(entries) == 0:
+            entries.append(Entry(label="No modules found :(", desc=None, action=None))
+        self.show_entries(entries)
 
 
     def show_error_message(self, msg):
@@ -166,8 +155,8 @@ class FooCommand(sublime_plugin.TextCommand):
     # Action callbacks
 
     def action_navigate(self, page):
-        module,_,page = page.partition(':')
-        return self.navigate_by_prefix(module, page)
+        module,_,pagename = page.partition(':')
+        return self.navigate_by_prefix(module, pagename)
 
     def action_write(self, text):
         for region in self.view.sel():
