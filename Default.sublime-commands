@@ -1,0 +1,4 @@
+[
+    {"caption": "Gendoc: Show documentation", "command": "gendoc" }
+//    {"caption": "Gendoc: List modules", "command": "gendoc" }
+]
