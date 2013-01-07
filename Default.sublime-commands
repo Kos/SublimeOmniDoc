@@ -1,4 +1,4 @@
 [
-    {"caption": "Gendoc: Show documentation", "command": "gendoc" }
-//    {"caption": "Gendoc: List modules", "command": "gendoc" }
+    {"caption": "GenDoc: Show documentation", "command": "gendoc" }
+//    {"caption": "GenDoc: List modules", "command": "gendoc" }
 ]
