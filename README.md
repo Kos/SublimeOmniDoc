@@ -13,7 +13,7 @@ Think of it as...
 
 ## How to use?
 
-See the GenDoc commands in the command palette (`ctrl+shift+p`). (Add some key bindins if you feel like it.)
+See the GenDoc commands in the command palette (`ctrl+shift+p`). (Add some key bindings if you feel like it.)
 
 ## What documentation is supported out of the box?
 
