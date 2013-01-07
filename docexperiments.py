@@ -8,11 +8,12 @@ import webbrowser, threading
 # - threading
 # - read some input from buffer
 # - handle read failures
+# - cleanup register_module / Module
 
 modules_by_prefix = {}
 modules_by_name = {}
 
-def register_module(mod):
+def register_module(mod): # Naaaaaaaaah,
     modules_by_prefix[mod.prefix] = mod
     modules_by_name[mod.name] = mod
 
@@ -37,7 +38,6 @@ class OpenBrowser(object):
         self.url = url
 
     def __call__(self, plugin):
-        #print 'Would open browser at', self.url
         webbrowser.open_new_tab(self.url)
 
 class Insert(object):
@@ -92,30 +92,51 @@ def stuff___(wnd, view, edit):
 
 class FooCommand(sublime_plugin.TextCommand):
 
-    def action_navigate(self, page):
-        module,_,page = page.partition(':')
-        return self.navigate_by_name(module, page)
+    def run(self, edit, **kwargs):
+        '''Plug-in entry point.'''
+        self.wnd = self.view.window()
+        self.edit = edit
 
-    def action_write(self, text):
-        for region in self.view.sel():
-            self.view.insert(self.edit, region.end(), text)
-
-    def navigate_by_name(self, modulename, page):
-        import hmm2 as module
-        self.navigate(module, page)
+        # For now, start with calling the command list
+        # TODO: read some context and decide
+        self.show_modules()
 
     def navigate(self, module, page=None):
-        # find the correct module
-        # import hmm2 as module
+        '''navigate(module, page) - Retrieves and displays a specific page from a module'''
 
-        if not page:
-            pages = module.index()
-        else:
-            pages = module.page(page)
+        # TODO attempt to retrieve from cache first
 
-        self.show_pages(pages)
+        def threadfunc():
+            error = None
+            try:
+                if not page:
+                    pages = module.index()
+                else:
+                    pages = module.page(page)
+
+                # Unwind any generators.
+                if iter(pages) is pages:
+                    pages = list(pages)
+            except Exception, e:
+                error = str(e)
+
+            # Go back to main thread with result
+            def done():
+                if error:
+                    self.show_error_message(error)
+                else:
+                    self.show_pages(pages)
+            sublime.set_timeout(done, 0)
+        
+        t = threading.Thread(target=threadfunc, name='fetch doc thread')
+        t.start()
+
+    def navigate_by_prefix(self, moduleprefix, page):
+        module = modules_by_prefix[moduleprefix]
+        self.navigate(module, page)
 
     def show_pages(self, pages):
+        '''show_pages( [Page] ) - opens a quick panel with specified pages'''
         pages = list(pages)
         items = map(page2item, pages)
 
@@ -128,11 +149,16 @@ class FooCommand(sublime_plugin.TextCommand):
         self.wnd.show_quick_panel(items, on_done, 0)
 
 
-    def commands(self):
+    def show_modules(self):
+        '''Lists available modules'''
         pages = []
+        # DEBUG
+        import hmm2
+        reload(hmm2)
+        # END DEBUG
         for name, mod in sorted(modules_by_name.iteritems(), key=lambda (name, mod): name):
             item = Page(label=mod.name,
-                desc=['raz','dwa','trzy'],
+                desc='TODO description',
                 action=Navigate(mod.prefix))
             pages.append(item)
         if len(pages) == 0:
@@ -140,9 +166,17 @@ class FooCommand(sublime_plugin.TextCommand):
         self.show_pages(pages)
 
 
+    def show_error_message(self, msg):
+        # This cool enough?
+        sublime.status_message(msg)
 
-    def run(self, edit, **kwargs): # YES
-        self.wnd = self.view.window()
-        self.edit = edit
-        self.commands()
-        #self.navigate(module)
+    # Action callbacks
+
+    def action_navigate(self, page):
+        module,_,page = page.partition(':')
+        return self.navigate_by_prefix(module, page)
+
+    def action_write(self, text):
+        for region in self.view.sel():
+            self.view.insert(self.edit, region.end(), text)
+

@@ -6,14 +6,13 @@ Page = gendoc.Page
 # - rename
 # - fix completion / signature
 
-
+TIMEOUT=5
 from bs4 import BeautifulSoup
 import urllib2
 
 NAMESPACE = 'gl'
 BASE_URL = 'http://www.opengl.org/sdk/docs/man/xhtml/'
 PAGE_URL_FORMAT = BASE_URL + '{0}.xml'
-TIMEOUT = 5
 
 def index():
 	page = urllib2.urlopen(BASE_URL, timeout=TIMEOUT).read()
@@ -41,7 +40,6 @@ def page(name):
 	doc_url = PAGE_URL_FORMAT.format(name)
 	print 'would read', doc_url
 	page = urllib2.urlopen(doc_url, timeout=TIMEOUT).read()
-
 	soup = BeautifulSoup(page) # TODO fetch page
 	title, _, desc = soup.find(class_='refnamediv').p.get_text().partition(u'—')
 	title, desc = map(unicode.strip, (title, desc))
@@ -62,5 +60,5 @@ def page(name):
 		name, desc = dt.get_text().strip(), dd.get_text().strip()
 		yield Page(name, desc, gendoc.Insert(name))
 
-gendoc.register_module(
-	gendoc.Module(name='OpenGL', prefix='gl', **locals()))
+module = gendoc.Module(name='OpenGL', prefix='gl', **locals())
+gendoc.register_module(module)
