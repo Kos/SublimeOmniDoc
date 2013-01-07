@@ -1,5 +1,5 @@
 # coding: utf-8
-import urllib2, bs4, gendoc
+import urllib2, bs4, omnidoc
 
 # TODOS:
 # - fix completion / signature
@@ -14,21 +14,21 @@ def get_index():
 	soup = bs4.BeautifulSoup(urllib2.urlopen(BASE_URL).read())
 	for link in soup('a', target='pagedisp'):
 		name = link.get_text()
-		yield gendoc.Entry(
+		yield omnidoc.Entry(
 				label=name,
 				desc=None,
-				action=gendoc.Navigate(prefix+':'+name)
+				action=omnidoc.Navigate(prefix+':'+name)
 			)
 
 def header(title, hint, completion, doc_url): # TODO refactor out
-	yield gendoc.Entry(
+	yield omnidoc.Entry(
 		label=title, # TODO centering???
 		desc=hint,
-		action=gendoc.Insert(completion))
-	yield gendoc.Entry(
+		action=omnidoc.Insert(completion))
+	yield omnidoc.Entry(
 		label='(show doc?)',
 		desc=doc_url,
-		action=gendoc.OpenBrowser(doc_url))
+		action=omnidoc.OpenBrowser(doc_url))
 
 def get_page(name):
 	doc_url = PAGE_URL_FORMAT.format(name)
@@ -40,8 +40,8 @@ def get_page(name):
 	for k in header(title, desc, completion, doc_url):
 		yield k
 
-	yield gendoc.Entry(
-		label=gendoc.whitespace.pad+'Parameters:',
+	yield omnidoc.Entry(
+		label=omnidoc.whitespace.pad+'Parameters:',
 		desc=None,
 		action=None)
 
@@ -51,7 +51,7 @@ def get_page(name):
 		# OGL is a bit crazy with spaces, so
 		name = ' '.join(name.split())
 		desc = ' '.join(desc.split())
-		yield gendoc.Entry(name, desc, gendoc.Insert(name))
+		yield omnidoc.Entry(name, desc, omnidoc.Insert(name))
 
 
-gendoc.create_module(**locals())
+omnidoc.create_module(**locals())

@@ -1,5 +1,5 @@
 # coding: utf-8
-import urllib2, bs4, gendoc
+import urllib2, bs4, omnidoc
 
 name = 'Qt framework'
 prefix = 'qt'
@@ -13,18 +13,18 @@ def get_index():
 		a = dd.a
 		if a is None:
 			continue
-		yield gendoc.Entry(label=a.get_text().strip(), desc=None, action=gendoc.Navigate(prefix+':'+a['href'][:-5]))
+		yield omnidoc.Entry(label=a.get_text().strip(), desc=None, action=omnidoc.Navigate(prefix+':'+a['href'][:-5]))
 
 
 def header(title, hint, completion, doc_url): # TODO refactor out
-	yield gendoc.Entry(
+	yield omnidoc.Entry(
 		label=title, # TODO centering
 		desc=hint,
-		action=gendoc.Insert(completion))
-	yield gendoc.Entry(
+		action=omnidoc.Insert(completion))
+	yield omnidoc.Entry(
 		label='(show doc?)',
 		desc=doc_url,
-		action=gendoc.OpenBrowser(doc_url))
+		action=omnidoc.OpenBrowser(doc_url))
 
 def find_desc_para(elem):
 	'''Finds the first paragraph after elem, but no further than a h3'''
@@ -44,7 +44,7 @@ def h3_to_page(h3, parentname):
 	sig = sig.replace(parentname+'::', '')
 	description = find_desc_para(h3).get_text().strip()
 	completion = sig # TODO a better completion
-	return gendoc.Entry(label=name, desc=[sig]+gendoc.wrap(description, shorten=1), action=gendoc.Insert(completion))
+	return omnidoc.Entry(label=name, desc=[sig]+omnidoc.wrap(description, shorten=1), action=omnidoc.Insert(completion))
 
 def get_page(name):
 	soup = bs4.BeautifulSoup(urllib2.urlopen(page_url_format.format(name)))
@@ -60,4 +60,4 @@ def get_page(name):
 
 	#for li in soup.find('table',class_='propsummary').find_all('li',class_='fn'):
 
-gendoc.create_module(**locals())
+omnidoc.create_module(**locals())

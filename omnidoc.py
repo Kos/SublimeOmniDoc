@@ -74,7 +74,7 @@ class whitespace:
     center = pad*2
     center2 = pad2*2
 
-class GendocCommand(sublime_plugin.TextCommand):
+class OmnidocCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, **kwargs):
         '''Plug-in entry point.'''
