@@ -1,17 +1,12 @@
 import sublime, sublime_plugin
-sublime
 import webbrowser, threading
+from registered import modules_by_name, modules_by_prefix
 
 # TODOS:
 # - some renames (page, this module itself...)
 # - caching :o
-# - threading
 # - read some input from buffer
-# - handle read failures
 # - cleanup register_module / Module
-
-modules_by_prefix = {}
-modules_by_name = {}
 
 def register_module(mod): # Naaaaaaaaah,
     modules_by_prefix[mod.prefix] = mod
@@ -152,10 +147,6 @@ class FooCommand(sublime_plugin.TextCommand):
     def show_modules(self):
         '''Lists available modules'''
         pages = []
-        # DEBUG
-        import hmm2
-        reload(hmm2)
-        # END DEBUG
         for name, mod in sorted(modules_by_name.iteritems(), key=lambda (name, mod): name):
             item = Page(label=mod.name,
                 desc='TODO description',
