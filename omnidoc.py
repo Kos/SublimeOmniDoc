@@ -1,5 +1,5 @@
 import sublime, sublime_plugin
-import webbrowser, threading
+import webbrowser, threading, urllib2
 
 # Initialise the module dictionaries, but don't overwrite upon reload()
 
@@ -9,8 +9,17 @@ if 'modules_by_name' not in locals():
     modules_by_name = {}
 
 # TODOS:
-# - page caching :o
 # - read some input from buffer and use it as a query
+
+def urlopen(url, *what, **ever):
+    def tell():
+        sublime.status_message('OmniDoc: Retrieving {0}'.format(url))
+
+    # Send the postcard to the main thread
+    sublime.set_timeout(tell, 0) 
+    # Run actual urlopen; errors are reported by callee
+    return urllib2.urlopen(url, *what, **ever)
+    
 
 def create_module(**kwargs):
     register_module(Module(**kwargs))
@@ -104,7 +113,11 @@ class OmnidocCommand(sublime_plugin.TextCommand):
     def navigate(self, module, page=None):
         '''navigate(module, page) - Retrieves and displays a specific page from a module'''
 
-        # TODO attempt to retrieve from cache first
+        try:
+            self.show_entries(data_cache[module, page])
+            return
+        except KeyError:
+            pass
 
         def threadfunc():
             error = None
@@ -120,13 +133,14 @@ class OmnidocCommand(sublime_plugin.TextCommand):
             except Exception, e:
                 import traceback
                 print traceback.format_exc()
-                error = str(e)
+                error = unicode(e)
 
             # Go back to main thread with result
             def done():
                 if error:
-                    self.show_error_message(error)
+                    self.show_error_message("Can't retrieve page {0}: {1}".format(page, error))
                 else:
+                    data_cache[module, page] = entries
                     self.show_entries(entries)
             sublime.set_timeout(done, 0)
         
@@ -141,7 +155,7 @@ class OmnidocCommand(sublime_plugin.TextCommand):
 
     def show_entries(self, entries):
         '''show_entries( [Entry] ) - opens a quick panel with specified entries'''
-        items = map(Entry.as_list, entries)
+        items = map(lambda x: x.as_list(), entries) # Fun fact: map(Entry.as_list won't work after reload())
 
         def on_done(n):
             if n<0: return
@@ -168,4 +182,24 @@ class OmnidocCommand(sublime_plugin.TextCommand):
     def show_error_message(self, msg):
         # This cool enough?
         sublime.status_message(msg)
+
+
+
+class Cache(object):
+
+    def __init__(self):
+        self.data = {}
+
+    def __getitem__(self, key):
+        (module, page) = key
+        return self.data[module.prefix, page]
+
+    def __setitem__(self, key, items):
+        (module, page) = key
+        self.data[module.prefix, page] = items
+
+
+if 'data_cache' not in locals():
+    data_cache = Cache()
+
 
