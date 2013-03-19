@@ -1,6 +1,12 @@
 import sublime, sublime_plugin
 import webbrowser, threading
-from registered import modules_by_name, modules_by_prefix
+
+# Initialise the module dictionaries, but don't overwrite upon reload()
+
+if 'modules_by_prefix' not in locals():
+    modules_by_prefix = {}
+if 'modules_by_name' not in locals():
+    modules_by_name = {}
 
 # TODOS:
 # - page caching :o
