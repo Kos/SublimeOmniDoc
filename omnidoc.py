@@ -32,7 +32,7 @@ class Navigate(object):
         self.page = page
 
     def __call__(self, plugin):
-        plugin.action_navigate(self.page)
+        plugin.navigate2(self.page)
 
 
 class OpenBrowser(object):
@@ -49,11 +49,30 @@ class Insert(object):
         self.code = code
 
     def __call__(self, plugin):
-        plugin.action_write(self.code)
+        view = plugin.view
+        edit = plugin.edit # ?
+        for region in view.sel():
+            view.insert(edit, region.end(), self.code)
                 
 
 import collections
-Entry = collections.namedtuple('Entry','label desc action')
+class Entry(collections.namedtuple('_Entry','label desc action')):
+    '''Represents an item to be displayed in Sublime quick panel'''
+
+    def as_list(self):
+        '''
+        returns an entry as understood by show_quick_panel:
+        first line is the header, following lines contain the description
+        '''
+        if not self.desc:
+            return [self.label]
+        if isinstance(self.desc, (str, unicode)):
+            description_lines = wrap(self.desc)
+        else:
+            description_lines = list(self.desc)
+        return [self.label] + description_lines
+
+
 
 def wrap(s, maxlines=3, shorten=0):
     maxlines = maxlines - shorten
@@ -64,15 +83,6 @@ def wrap(s, maxlines=3, shorten=0):
         wrapped[-1] = wrapped[-1][:55] + '...'
     return wrapped
 
-def entry2item(entry):
-    if entry.desc is None:
-        return entry.label
-    if isinstance(entry.desc, (list, tuple)):
-        # we're iterable, don't wrap
-        return [entry.label] + list(entry.desc)
-    else:
-        # consider desc a string, wrap if needed
-        return [entry.label] + wrap(entry.desc)
 
 class whitespace:
     pad = ' '*8
@@ -123,14 +133,15 @@ class OmnidocCommand(sublime_plugin.TextCommand):
         t = threading.Thread(target=threadfunc, name='fetch doc thread')
         t.start()
 
-    def navigate_by_prefix(self, moduleprefix, page):
-        module = modules_by_prefix[moduleprefix]
-        self.navigate(module, page)
+    def navigate2(self, qualified_page):
+        '''navigate2(qualified_page) - reads "module:page" and calls navigate'''
+        module_prefix, _, page = qualified_page.partition(':')
+        module = modules_by_prefix[module_prefix]
+        return self.navigate(module, page)
 
     def show_entries(self, entries):
         '''show_entries( [Entry] ) - opens a quick panel with specified entries'''
-        entries = list(entries)
-        items = map(entry2item, entries)
+        items = map(Entry.as_list, entries)
 
         def on_done(n):
             if n<0: return
@@ -157,14 +168,4 @@ class OmnidocCommand(sublime_plugin.TextCommand):
     def show_error_message(self, msg):
         # This cool enough?
         sublime.status_message(msg)
-
-    # Action callbacks
-
-    def action_navigate(self, page):
-        module,_,pagename = page.partition(':')
-        return self.navigate_by_prefix(module, pagename)
-
-    def action_write(self, text):
-        for region in self.view.sel():
-            self.view.insert(self.edit, region.end(), text)
 
