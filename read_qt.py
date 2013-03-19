@@ -3,9 +3,8 @@ import bs4, omnidoc
 
 name = 'Qt framework'
 prefix = 'qt'
-base_url = 'http://doc.qt.digia.com/qt/'
-index_url = 'http://doc.qt.digia.com/qt/classes.html'
-page_url_format = 'http://doc.qt.digia.com/qt/{0}.html'
+index_url = 'http://qt-project.org/doc/qt-4.8/classes.html'
+page_url_format = 'http://qt-project.org/doc/qt-4.8/{0}.html'
 
 def get_index():
 	soup = bs4.BeautifulSoup(omnidoc.urlopen(index_url))
@@ -48,7 +47,7 @@ def h3_to_page(h3, parentname):
 
 def get_page(name):
 	soup = bs4.BeautifulSoup(omnidoc.urlopen(page_url_format.format(name)))
-	title, hint = soup.title.get_text().partition(':')[2].strip().split()[:2]
+	title, hint = soup.title.get_text().partition('|')[2].strip().split()[:2]
 	for k in header(
 			title = title,
 			hint = hint,
@@ -61,3 +60,4 @@ def get_page(name):
 	#for li in soup.find('table',class_='propsummary').find_all('li',class_='fn'):
 
 omnidoc.create_module(**locals())
+
