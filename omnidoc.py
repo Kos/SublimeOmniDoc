@@ -171,7 +171,7 @@ class OmnidocCommand(sublime_plugin.TextCommand):
         entries = []
         for name, mod in sorted(modules_by_name.iteritems(), key=lambda (name, mod): name):
             entry = Entry(label=mod.name,
-                desc='TODO description',
+                desc=None, # TODO description
                 action=Navigate(mod.prefix))
             entries.append(entry)
         if len(entries) == 0:
