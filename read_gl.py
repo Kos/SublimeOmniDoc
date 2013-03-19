@@ -1,5 +1,5 @@
 # coding: utf-8
-import urllib2, bs4, omnidoc
+import bs4, omnidoc
 
 # TODOS:
 # - fix completion / signature
@@ -11,7 +11,7 @@ BASE_URL = 'http://www.opengl.org/sdk/docs/man/xhtml/'
 PAGE_URL_FORMAT = BASE_URL + '{0}.xml'
 
 def get_index():
-	soup = bs4.BeautifulSoup(urllib2.urlopen(BASE_URL).read())
+	soup = bs4.BeautifulSoup(omnidoc.urlopen(BASE_URL).read())
 	for link in soup('a', target='pagedisp'):
 		name = link.get_text()
 		yield omnidoc.Entry(
@@ -32,7 +32,7 @@ def header(title, hint, completion, doc_url): # TODO refactor out
 
 def get_page(name):
 	doc_url = PAGE_URL_FORMAT.format(name)
-	soup = bs4.BeautifulSoup(urllib2.urlopen(doc_url).read())
+	soup = bs4.BeautifulSoup(omnidoc.urlopen(doc_url).read())
 	title, _, desc = soup.find(class_='refnamediv').p.get_text().partition(u'—')
 	title, desc = map(unicode.strip, (title, desc))
 	completion = soup.find('div', class_='funcsynopsis').get_text()
