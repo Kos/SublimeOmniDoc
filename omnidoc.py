@@ -203,3 +203,8 @@ if 'data_cache' not in locals():
     data_cache = Cache()
 
 
+class OmnidocClearCacheCommand(sublime_plugin.ApplicationCommand):
+
+    def run(self, *what, **ever):
+        global data_cache
+        data_cache = Cache()

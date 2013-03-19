@@ -1,4 +1,5 @@
 [
-    {"caption": "OmniDoc: Show documentation", "command": "omnidoc" }
+    {"caption": "OmniDoc: Show documentation", "command": "omnidoc" },
+    {"caption": "OmniDoc: Clear cache", "command": "omnidoc_clear_cache" }
 //    {"caption": "OmniDoc: List modules", "command": "omnidoc" }
 ]
