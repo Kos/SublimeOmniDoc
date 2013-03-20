@@ -58,7 +58,8 @@ def read_type(elem):
 	for m in elem('dl'):
 		name = m.find(class_='descname').get_text()
 		sig = m.dt.get_text().strip().rstrip(u'\xb6')
-		desc = omnidoc.wrap(m.dd.find('p').get_text().replace('\n',' '))
+		desc_p = m.dd.find('p')
+		desc = omnidoc.wrap(desc_p.get_text().replace('\n',' ')) if desc_p else []
 		yield omnidoc.Entry(label=name, desc=[sig]+desc, action=omnidoc.Insert(sig))
 
 
