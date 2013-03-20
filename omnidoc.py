@@ -1,5 +1,5 @@
 import sublime, sublime_plugin
-import webbrowser, threading, urllib2
+import webbrowser, threading, urllib2, re
 
 # Initialise the module dictionaries, but don't overwrite upon reload()
 
@@ -7,9 +7,6 @@ if 'modules_by_prefix' not in locals():
     modules_by_prefix = {}
 if 'modules_by_name' not in locals():
     modules_by_name = {}
-
-# TODOS:
-# - read some input from buffer and use it as a query
 
 def urlopen(url, *what, **ever):
     def tell():
@@ -61,7 +58,7 @@ class Insert(object):
         view = plugin.view
         edit = plugin.edit # ?
         for region in view.sel():
-            view.insert(edit, region.end(), self.code)
+            view.replace(edit, region, self.code)
                 
 
 import collections
@@ -102,13 +99,54 @@ class whitespace:
 class OmnidocCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, **kwargs):
-        '''Plug-in entry point.'''
+        '''
+        Plug-in entry point.
+
+        Keyword arguments:
+
+        context (default: True):
+            If True, read a query from the selection.
+            Otherwise, display module index.
+
+        '''
         self.wnd = self.view.window()
         self.edit = edit
+        context = kwargs.pop('context', True)
 
-        # For now, start with calling the module list
-        # TODO: read some context and decide
-        self.show_modules()
+        if context:
+            p = self.get_query_under_cursor()
+            if p:
+                self.navigate2(p)
+            else:
+                self.show_error_message('Query module:page needed')
+        else:
+            self.show_modules()
+
+    def get_query_under_cursor(self):
+        '''Find a query pattern that looks like QUERY_PATTERN or None.
+
+        If there's text selected, match it against QUERY_PATTERN;
+        otherwise look directly to the cursor's left
+        '''
+        sel = self.view.sel()[0]
+        right = sel.end()
+        if sel.begin() < sel.end():
+            left = sel.begin()
+        else:
+            left = self.view.line(right).begin()
+            while left < right and not self.QUERY_PATTERN.match(self.view.substr(sublime.Region(left, right))):
+                left += 1
+
+        reg = sublime.Region(left, right)
+        if self.QUERY_PATTERN.match(self.view.substr(reg)):
+            self.view.sel().clear()
+            self.view.sel().add(reg)
+            return self.view.substr(reg)
+        else:
+            return None
+
+    QUERY_PATTERN = re.compile('^\w+:[\w\.#-]*$')
+
 
     def navigate(self, module, page=None):
         '''navigate(module, page) - Retrieves and displays a specific page from a module'''
@@ -151,6 +189,8 @@ class OmnidocCommand(sublime_plugin.TextCommand):
         '''navigate2(qualified_page) - reads "module:page" and calls navigate'''
         module_prefix, _, page = qualified_page.partition(':')
         module = modules_by_prefix[module_prefix]
+        if page == '':
+            page = None
         return self.navigate(module, page)
 
     def show_entries(self, entries):
@@ -164,7 +204,6 @@ class OmnidocCommand(sublime_plugin.TextCommand):
                 action(self)
             
         self.wnd.show_quick_panel(items, on_done, 0)
-
 
     def show_modules(self):
         '''Lists available modules'''
