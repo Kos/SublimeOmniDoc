@@ -32,6 +32,23 @@ class Module(object):
         for field in self.required_stuff:
             setattr(self, field, kwargs[field])
 
+    def query_page(self, page):
+        # Default implementation - ask for the index, look for matches
+        # TODO: allow customisation?
+        try:
+            index = data_cache[self, None]
+        except KeyError:
+            index = list(self.get_index())
+        links = [entry for entry in index if hasattr(entry.action, 'page')] # I'd use a isinstance() call here, but gets broken by reload
+        matching_links = fuzzy_match(page, links, key=lambda entry: entry.action.page)
+        return matching_links
+
+
+def fuzzy_match(pattern, opts, key):
+    '''Selects the elements opt from opts for which key(opt) looks like pattern'''
+    # difflib doesn't seem to cut it, let's try the simplest for now
+    return [opt for opt in opts if pattern.lower() in key(opt).lower()]
+
 class Navigate(object):
 
     def __init__(self, page):
@@ -116,7 +133,7 @@ class OmnidocCommand(sublime_plugin.TextCommand):
         if context:
             p = self.get_query_under_cursor()
             if p:
-                self.navigate2(p)
+                self.query(p)
             else:
                 self.show_error_message('Query module:page needed')
         else:
@@ -187,11 +204,22 @@ class OmnidocCommand(sublime_plugin.TextCommand):
 
     def navigate2(self, qualified_page):
         '''navigate2(qualified_page) - reads "module:page" and calls navigate'''
+        module, page = self._split_page_name(qualified_page)
+        return self.navigate(module, page)
+
+    def query(self, query):
+        module, page = self._split_page_name(query)
+        if not page:
+            self.navigate(module, None)
+        else:
+            self.show_entries(module.query_page(page))
+
+    def _split_page_name(self, qualified_page):
         module_prefix, _, page = qualified_page.partition(':')
         module = modules_by_prefix[module_prefix]
-        if page == '':
+        if not page:
             page = None
-        return self.navigate(module, page)
+        return module, page
 
     def show_entries(self, entries):
         '''show_entries( [Entry] ) - opens a quick panel with specified entries'''
