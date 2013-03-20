@@ -13,7 +13,17 @@ Think of it as...
 
 ## How to use?
 
-See the OmniDoc commands in the command palette (`ctrl+shift+p`). (Add some key bindings if you feel like it.)
+See the OmniDoc commands in the command palette.
+
+The `module list` command is a good starting point. Explore the members easily using Sublime's fuzzy matching. Documentation is organised into "modules". Each module corresponds to a source of documentation and is identified by a short name ("prefix"). Each module has an "index page" and a number of named pages (for example, one page for a function or a class).
+
+Pages consist of entries and are displayed using Sublime's quick panel. Some entries (such as these in module index) work as links to other pages, while others just insert stuff (like a method signature) into the editor.
+
+The `show documentation` command is what you'll be spending the most time with: Type something like `gl:vertex`, run this command and you'll obtain all pages from module `gl` that have `vertex` in their name. Alternatively, `gl:` will show you the module's index.
+
+I recommend to create a key binding for this command. Example key binding to paste into `Preferences` -> `Key Bindings - User`:
+
+	{ "keys": ["ctrl+shift+o"], "command": "omnidoc" }
 
 ## What documentation is supported out of the box?
 

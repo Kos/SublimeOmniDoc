@@ -38,7 +38,7 @@ class Module(object):
         try:
             index = data_cache[self, None]
         except KeyError:
-            index = list(self.get_index())
+            index = list(self.get_index()) # TODO thread this away, hook up to cache
         links = [entry for entry in index if hasattr(entry.action, 'page')] # I'd use a isinstance() call here, but gets broken by reload
         matching_links = fuzzy_match(page, links, key=lambda entry: entry.action.page)
         return matching_links
