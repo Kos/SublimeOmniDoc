@@ -40,18 +40,23 @@ def get_page(name):
 	for k in header(title, desc, completion, doc_url):
 		yield k
 
-	yield omnidoc.Entry(
-		label=omnidoc.whitespace.pad+'Parameters:',
-		desc=None,
-		action=None)
+	variablelist = soup.find(class_='variablelist')	
+	if variablelist:
 
-	for dt in soup.find(class_='variablelist').dl.find_all('dt', recursive=False):
-		dd = dt.find_next_sibling('dd')
-		name, desc = dt.get_text().strip(), dd.get_text().strip()
-		# OGL is a bit crazy with spaces, so
-		name = ' '.join(name.split())
-		desc = ' '.join(desc.split())
-		yield omnidoc.Entry(name, desc, omnidoc.Insert(name))
+		yield omnidoc.Entry(
+			label=omnidoc.whitespace.pad+'Parameters:',
+			desc=None,
+			action=None)
+
+		for dt in variablelist.dl.find_all('dt', recursive=False):
+			dd = dt.find_next_sibling('dd')
+			name, desc = dt.get_text().strip(), dd.get_text().strip()
+			# OGL is a bit crazy with spaces, so
+			name = ' '.join(name.split())
+			desc = ' '.join(desc.split())
+			yield omnidoc.Entry(name, desc, omnidoc.Insert(name))
 
 
 omnidoc.create_module(**locals())
+
+# 
