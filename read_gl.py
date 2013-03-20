@@ -58,5 +58,3 @@ def get_page(name):
 
 
 omnidoc.create_module(**locals())
-
-# 

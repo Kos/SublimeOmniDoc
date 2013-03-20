@@ -212,7 +212,13 @@ class OmnidocCommand(sublime_plugin.TextCommand):
         if not page:
             self.navigate(module, None)
         else:
-            self.show_entries(module.query_page(page))
+            query_results = module.query_page(page)
+            if len(query_results) == 0:
+                self.show_error_message('Not found: '+query)
+            elif len(query_results) == 1 and hasattr(query_results[0], 'action'):
+                query_results[0].action(self)
+            else:
+                self.show_entries(query_results)
 
     def _split_page_name(self, qualified_page):
         module_prefix, _, page = qualified_page.partition(':')
