@@ -17,8 +17,9 @@ See the OmniDoc commands in the command palette (`ctrl+shift+p`). (Add some key 
 
 ## What documentation is supported out of the box?
 
-- [OpenGL (man pages)](http://www.opengl.org/sdk/docs/man/xhtml/)
-- [Qt](http://doc.qt.digia.com/qt/)
+- [OpenGL](http://www.opengl.org/sdk/docs/man/xhtml/) (man pages)
+- [Qt](qt-project.org/doc/qt-4.8/)
+- [SQLAlchemy](http://docs.sqlalchemy.org/en/rel_0_8/) (a tidbit)
 
 ## Can it also support XYZ?
 
